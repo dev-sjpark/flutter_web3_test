@@ -4,18 +4,27 @@ import 'package:get_storage/get_storage.dart';
 
 enum EthNetwork {
   mainNet,
-  rinkeby;
+  goerli;
 
   String getApiUrl(String apiKey) {
-    return 'https://${toString()}.infura.io/v3/$apiKey';
+    String secondDomain;
+    switch (this) {
+      case EthNetwork.mainNet:
+        secondDomain = 'mainnet';
+        break;
+      case EthNetwork.goerli:
+        secondDomain = 'goerli';
+        break;
+    }
+    return 'https://$secondDomain.infura.io/v3/$apiKey';
   }
 
   int get chainID {
     switch (this) {
       case EthNetwork.mainNet:
         return 1;
-      case EthNetwork.rinkeby:
-        return 4;
+      case EthNetwork.goerli:
+        return 5;
     }
   }
 
@@ -23,7 +32,7 @@ enum EthNetwork {
     switch (this) {
       case EthNetwork.mainNet:
         return const Color(0xFF4BC9F0);
-      case EthNetwork.rinkeby:
+      case EthNetwork.goerli:
         return const Color(0xFFFFD166);
     }
   }
@@ -32,18 +41,17 @@ enum EthNetwork {
     switch (this) {
       case EthNetwork.mainNet:
         return '이더리움 메인넷';
-      case EthNetwork.rinkeby:
-        return 'Rinkeby 테스트 네트워크';
+      case EthNetwork.goerli:
+        return 'Goerli 테스트 네트워크';
     }
   }
 
-  @override
-  String toString() {
+  String get currency {
     switch (this) {
       case EthNetwork.mainNet:
-        return 'mainnet';
-      case EthNetwork.rinkeby:
-        return 'rinkeby';
+        return 'ETH';
+      case EthNetwork.goerli:
+        return 'GoerliETH';
     }
   }
 
@@ -52,8 +60,8 @@ enum EthNetwork {
     switch (value) {
       case 'mainnet':
         return EthNetwork.mainNet;
-      case 'rinkeby':
-        return EthNetwork.rinkeby;
+      case 'goerli':
+        return EthNetwork.goerli;
       default:
         return EthNetwork.mainNet;
     }

@@ -19,9 +19,9 @@ class ImportWalletController extends GetxController {
 
   void onTapConfirm() {
     final key = textController.text.trim();
-    final succeed = Web3().auth(key);
-    if (succeed) {
-      Get.back();
-    }
+    // final succeed = Web3().auth(key);
+    // if (succeed) {
+    //   Get.back();
+    // }
   }
 }

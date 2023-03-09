@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-Future<T?> showBottomSelector<T>({required String title, required List<T> options}) {
+Future<T?> showBottomSelector<T>({
+  required String title,
+  required List<T> options,
+  String Function(T value)? mapDisplayName,
+}) {
   return Get.bottomSheet<T>(
     _BottomSelector(
       options: options,
       title: title,
+      mapDisplayName: mapDisplayName ?? (v) => v.toString(),
     ),
     isScrollControlled: true,
-    backgroundColor: const Color(0xFF141414),
+    backgroundColor: Colors.black,
     barrierColor: Colors.transparent,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24))
@@ -18,9 +23,16 @@ Future<T?> showBottomSelector<T>({required String title, required List<T> option
 }
 
 class _BottomSelector<T> extends StatelessWidget {
-  const _BottomSelector({super.key, required this.options, required this.title});
+  const _BottomSelector({
+    super.key,
+    required this.options,
+    required this.mapDisplayName,
+    required this.title,
+  });
 
   final List<T> options;
+
+  final String Function(T value) mapDisplayName;
 
   final String title;
 
@@ -55,7 +67,7 @@ class _BottomSelector<T> extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                e.toString(),
+                mapDisplayName(e),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,

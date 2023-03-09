@@ -1,12 +1,15 @@
 library home_page;
 
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_test/common/bottom_selector.dart';
 import 'package:flutter_web3_test/core/global_controller.dart';
 import 'package:flutter_web3_test/core/web3.dart';
 import 'package:flutter_web3_test/model/EthNetwork.dart';
-import 'package:flutter_web3_test/routes.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+import 'package:walletconnect_dart/walletconnect_dart.dart';
+
 
 part './homeController.dart';
 
@@ -16,123 +19,26 @@ class HomePage extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appBar,
-      backgroundColor: const Color(0xFF23262F),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            networkInfo,
-
-            walletInfo,
-
-            buttonBuilder(text: '지갑 불러오기', onTap: controller.connect),
-          ],
-        ),
+      appBar: AppBar(
+        title: _networkSelector,
       ),
+      backgroundColor: const Color(0xFF191919),
+      body: Obx(() {
+        if (controller.account.value.isEmpty) {
+          return _connectButton;
+        }
+        return _accountInfo;
+      }),
     );
   }
-
-  Widget get networkInfo => GestureDetector(
-    onTap: controller.onTapChangeNetwork,
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black38),
-      ),
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Ethereum Network',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w300,
-              fontSize: 13,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Obx(() => Text(
-            GlobalController.to.ethNetwork.value.toString(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
-          )),
-        ],
-      ),
-    ),
-  );
-
-  Widget get walletInfo => Obx(() {
-    if (GlobalController.to.isConnected.value) {
-      return FutureBuilder<String?>(
-        future: Web3().getBalance(),
-        builder: (context, snap) {
-          final data = snap.data;
-          if (snap.connectionState == ConnectionState.done && data != null) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 24),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black54),
-              ),
-              child: Text(
-                data,
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-          return const SizedBox();
-        },
-      );
-    }
-    return const SizedBox();
-  });
-
-  Widget buttonBuilder({required String text, void Function()? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Get.theme.primaryColor,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-
-  AppBar get _appBar => AppBar(
-    title: networkSelector,
-    actions: [
-      _profile,
-    ],
-  );
 
   /// 앱바의 타이틀 영역에서 들어가는 네트워크 표시자
-  Widget get networkSelector => GestureDetector(
+  Widget get _networkSelector => GestureDetector(
     onTap: controller.onTapChangeNetwork,
     child: Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white60),
-        borderRadius: BorderRadius.circular(40)
+          border: Border.all(color: Colors.white60),
+          borderRadius: BorderRadius.circular(40)
       ),
       padding: const EdgeInsets.symmetric(
         vertical: 6, horizontal: 8,
@@ -172,36 +78,113 @@ class HomePage extends GetView<HomeController> {
     ),
   );
 
-  /// 앱바 우측에 들어가는 프로필 아이콘
-  Widget get _profile => Obx(() {
-    final connected = GlobalController.to.isConnected.value;
-    if (connected) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 8, horizontal: 24,
-        ),
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(50),
-              border: Border.all(
-                color: Colors.white70,
-                width: 1,
-              ),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50),
-                color: Colors.white12
-              ),
-            ),
+  /// 지갑 연결 후 지갑 정보 표시
+  Widget get _accountInfo => SingleChildScrollView(
+    padding: const EdgeInsets.all(32),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'Your Account',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
           ),
         ),
-      );
-    }
-    return const SizedBox();
-  });
 
+        // 지갑 정보
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(40),
+            color: const Color(0xFF333333),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                controller.accountShortCut,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.copy,
+                  color: Colors.white70,
+                  size: 14,
+                ),
+              )
+            ],
+          ),
+        ),
+
+        // 디바이더
+        Container(
+          width: Get.width,
+          height: 0.5,
+          color: Colors.white30,
+        ),
+
+        // 잔액
+        Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: Obx(() => Text(
+            '${controller.balance.value} '
+                '${GlobalController.to.ethNetwork.value.currency}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+            ),
+          ))
+        )
+      ],
+    ),
+  );
+
+  /// 지갑 연결 안된 경우 연결하라는 버튼
+  Widget get _connectButton => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Obx(() {
+        if (controller.waiting.isTrue) {
+          return const CircularProgressIndicator();
+        }
+        return buttonBuilder(
+          text: 'Metamask 연결',
+          onTap: controller.onTapConnectWallet,
+        );
+      }),
+    ),
+  );
+
+  Widget buttonBuilder({required String text, void Function()? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(42),
+          color: Get.theme.primaryColor,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

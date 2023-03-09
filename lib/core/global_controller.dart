@@ -19,10 +19,8 @@ class GlobalController extends GetxController {
   void onReady() {
     // network 변경 리스너
     ethNetwork.listen((net) {
-      GetStorage().write(Keys.ethNetwork, net.toString());
+      GetStorage().write(Keys.ethNetwork, net.name);
     });
-    // web3 초기화
-    Web3().init();
     super.onReady();
   }
 

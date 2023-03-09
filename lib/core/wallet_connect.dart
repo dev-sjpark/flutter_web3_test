@@ -1,20 +1,20 @@
 import 'dart:developer';
 import 'package:flutter_web3_test/core/global_controller.dart';
-import 'package:walletconnect_dart/walletconnect_dart.dart' as wc;
+import 'package:walletconnect_dart/walletconnect_dart.dart';
 
-class WalletConnect {
-  static WalletConnect? _instance;
+class Wallet {
+  static Wallet? _instance;
 
-  factory WalletConnect() => _instance ?? WalletConnect._();
+  factory Wallet() => _instance ?? Wallet._();
 
-  WalletConnect._() {
+  Wallet._() {
     _instance = this;
   }
 
   void connect() {
-    final connector = wc.WalletConnect(
+    final connector = WalletConnect(
       bridge: 'https://bridge.walletconnect.org',
-      clientMeta: const wc.PeerMeta(
+      clientMeta: const PeerMeta(
         name: 'WalletConnect',
         description: 'WalletConnect Developer App',
         url: 'https://walletconnect.org',
